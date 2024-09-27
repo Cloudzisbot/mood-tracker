@@ -3,23 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mood Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Ensure Chart.js is linked -->
-</head>
-<body>
-    <div id="entries"></div>
-    <div id="visuals"></div>
-    <div id="calendar"></div>
-    <canvas id="moodChart" width="400" height="400"></canvas>
+    <title>Mood Tracker with Firebase</title>
+    <style>
+        body {
+            transition: background-image 0.5s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+    <!-- Firebase and Chart.js -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
 
-    <!-- Legend for mood colors -->
-    <div id="legend"></div>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2fQtuZM4xzStyIaVHIFGMVzFgpX-9DbY",
+            authDomain: "moodtracker-59c98.firebaseapp.com",
+            databaseURL: "https://moodtracker-59c98-default-rtdb.firebaseio.com",
+            projectId: "moodtracker-59c98",
+            storageBucket: "moodtracker-59c98.appspot.com",
+            messagingSenderId: "258227391396",
+            appId: "1:258227391396:web:81ed1139911f0e31524f31",
+            measurementId: "G-H6MK9D5W90"
+        };
 
-    <!-- Button to manually trigger color coding -->
-    <button onclick="colorCodeCalendar()">Update Calendar</button>
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-    <script>
-        // Your JavaScript code goes here
         const moodEntries = [];
         const moodCount = { happy: 0, sad: 0, neutral: 0, insecure: 0, angry: 0, frustrated: 0, lonely: 0, confused: 0, other: 0 };
         const moodColors = {
@@ -34,46 +46,102 @@
             other: '#607d8b'
         };
 
+        // Varied quotes for each mood, including biblical quotes and pet name personalization
+        const moodQuotes = {
+            happy: [
+                `"Rejoice in the Lord always; again I will say, Rejoice." - Philippians 4:4`,
+                `"The joy of the Lord is your strength." - Nehemiah 8:10`,
+                `"I love you always, my dear ${getRandomPetName()}."`,
+                `"Happiness is not by chance, but by choice."`
+            ],
+            sad: [
+                `"The Lord is near to the brokenhearted and saves the crushed in spirit." - Psalm 34:18`,
+                `"Weeping may last through the night, but joy comes with the morning." - Psalm 30:5`,
+                `"Even in the darkest times, the sun will rise again."`,
+                `"I love you always, my sweet ${getRandomPetName()}."`
+            ],
+            angry: [
+                `"A soft answer turns away wrath, but a harsh word stirs up anger." - Proverbs 15:1`,
+                `"Do not be overcome by evil, but overcome evil with good." - Romans 12:21`,
+                `"Anger is one letter short of danger."`,
+                `"I love you, my fierce ${getRandomPetName()}, no matter what."`
+            ],
+            frustrated: [
+                `"The Lord will fight for you; you need only to be still." - Exodus 14:14`,
+                `"Do not grow weary of doing good, for in due season we will reap." - Galatians 6:9`,
+                `"Frustration is a signal that something needs to change."`,
+                `"I love you always, my resilient ${getRandomPetName()}."`
+            ],
+            lonely: [
+                `"I will never leave you nor forsake you." - Hebrews 13:5`,
+                `"The Lord is my shepherd, I shall not want." - Psalm 23:1`,
+                `"Even in solitude, you are never truly alone."`,
+                `"I love you, my dear ${getRandomPetName()}, and I’m always here for you."`
+            ],
+            confused: [
+                `"Trust in the Lord with all your heart, and do not lean on your own understanding." - Proverbs 3:5`,
+                `"For God is not a God of confusion but of peace." - 1 Corinthians 14:33`,
+                `"Confusion is the gateway to clarity."`,
+                `"I love you, my curious ${getRandomPetName()}."`
+            ],
+            other: [
+                `"Each new day is an opportunity to grow."`,
+                `"God’s mercies are new every morning." - Lamentations 3:23`,
+                `"You are loved more than you know."`,
+                `"I love you, my precious ${getRandomPetName()}."`
+            ]
+        };
+
+        // Function to get a random quote based on mood
+        function getRandomQuote(mood) {
+            const quotes = moodQuotes[mood] || moodQuotes['other'];
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            return quotes[randomIndex];
+        }
+
+        // Function to log the mood and store it in Firebase
         function logMood() {
             const mood = document.getElementById('mood').value;
             const note = document.getElementById('note').value;
-            const date = new Date().toLocaleDateString();
-            moodEntries.push({ mood, date, note });
+            const date = document.getElementById('logDate').value || new Date().toLocaleDateString();
+
+            const moodEntry = { mood, note, date };
+
+            // Push mood entry to Firebase Realtime Database
+            const moodsRef = ref(database, 'moods');
+            push(moodsRef, moodEntry);
+
+            // Update the local mood entries array
+            moodEntries.push(moodEntry);
             moodCount[mood]++;
+
             displayMoods();
             displayVisuals(mood);
-            colorCodeCalendar(); // Update calendar with color-coding
-            displayChart(); // Update mood chart
+            colorCodeCalendar();
+            displayChart();
         }
 
+        // Display moods from entries
         function displayMoods() {
             const entriesDiv = document.getElementById('entries');
             entriesDiv.innerHTML = moodEntries.map(entry => `${entry.date}: ${entry.mood} - ${entry.note}`).join('<br>');
         }
 
+        // Display visuals, change background, and show a random quote for each mood
         function displayVisuals(mood) {
             const visualsDiv = document.getElementById('visuals');
-            let visualsContent = '';
-            if (mood === 'insecure') {
-                visualsContent = '<img src="download (44).jpeg" alt="Insecure Mood Image" style="width: 100%;">';
-            } else if (mood === 'sad') {
-                visualsContent = `
-                <blockquote>"The Lord is near to the brokenhearted and saves the crushed in spirit." - Psalm 34:18</blockquote>
-                <blockquote>"Even the darkest night will end and the sun will rise."</blockquote>
-                <blockquote>"I love you always, my dear ${getRandomPetName()}."</blockquote>
-                `;
-            } else if (mood === 'lonely') {
-                visualsContent = `
-                <blockquote>"I will never leave you nor forsake you." - Hebrews 13:5</blockquote>
-                <blockquote>"You are never alone, even when it feels that way."</blockquote>
-                <blockquote>"You are loved, my precious ${getRandomPetName()}."</blockquote>
-                `;
-            } else if (mood === 'angry') {
-                visualsContent = '<img src="download (45).jpeg" alt="Angry Mood Image" style="width: 100%;">';
-            }
-            visualsDiv.innerHTML = visualsContent;
+            const background = moodImages[mood] || moodImages['neutral'];
+            const quote = getRandomQuote(mood);
+
+            // Change background image
+            document.body.style.backgroundImage = background;
+            // Display the random quote
+            visualsDiv.innerHTML = `
+                <blockquote>${quote}</blockquote>
+            `;
         }
 
+        // Get a random pet name for personalized quotes
         function getRandomPetName() {
             const petNames = [
                 "M’lady", "Gorgeous", "Darling", "My love", "여보", "자기야", "Angel", "My girl", "Baby", "Babe", "My princess",
@@ -83,6 +151,72 @@
             const randomIndex = Math.floor(Math.random() * petNames.length);
             return petNames[randomIndex];
         }
+
+        // Ask about the day (simple prompt)
+        function askAboutDay() {
+            const day = prompt("How was your day?");
+            if (day) {
+                alert(`Thank you for sharing! You said your day was: "${day}".`);
+            }
+        }
+
+        // Color code the calendar
+        function colorCodeCalendar() {
+            const currentDate = new Date();
+            const day = currentDate.getDate();
+            const todayMoodEntry = moodEntries.find(entry => new Date(entry.date).getDate() === day);
+
+            if (todayMoodEntry) {
+                const dayBlock = document.getElementById(`day-${day}`);
+                if (dayBlock) {
+                    dayBlock.style.backgroundColor = moodColors[todayMoodEntry.mood] || '#ffffff';
+                }
+            }
+        }
+
+        // Display mood chart
+        function displayChart() {
+            const ctx = document.getElementById('moodChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Happy', 'Sad', 'Neutral', 'Insecure', 'Angry', 'Frustrated', 'Lonely', 'Confused', 'Other'],
+                    datasets: [{
+                        label: 'Mood Count',
+                        data: [
+                            moodCount.happy, moodCount.sad, moodCount.neutral,
+                            moodCount.insecure, moodCount.angry, moodCount.frustrated,
+                            moodCount.lonely, moodCount.confused, moodCount.other
+                        ],
+                        backgroundColor: Object.values(moodColors)
+                    }]
+                }
+            });
+        }
+
+        // Load moods from Firebase
+        function loadMoodsFromFirebase() {
+            const moodsRef = ref(database, 'moods');
+            onValue(moodsRef, (snapshot) => {
+                const data = snapshot.val();
+                moodEntries.length = 0; // Clear the local array
+
+                for (let id in data) {
+                    moodEntries.push(data[id]);
+                    moodCount[data[id].mood]++;
+                }
+
+                displayMoods();
+                displayChart();
+            });
+        }
+
+        // Initial calls on page load
+        window.addEventListener('load', () => {
+            generateCalendar();
+            loadMoodsFromFirebase();
+            askAboutDay(); // Ask how the day was
+        });
 
         function generateCalendar() {
             const calendarDiv = document.getElementById('calendar');
@@ -103,58 +237,53 @@
             calendarHTML += '</tr></table>';
             calendarDiv.innerHTML = calendarHTML;
         }
-
-        function colorCodeCalendar() {
-            const currentDate = new Date();
-            const day = currentDate.getDate();
-            const todayMoodEntry = moodEntries.find(entry => new Date(entry.date).getDate() === day);
-            
-            if (todayMoodEntry) {
-                const dayBlock = document.getElementById(`day-${day}`);
-                if (dayBlock) {
-                    dayBlock.style.backgroundColor = moodColors[todayMoodEntry.mood] || '#ffffff';
-                }
-            }
-        }
-
-        function displayChart() {
-            const ctx = document.getElementById('moodChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Happy', 'Sad', 'Neutral', 'Insecure', 'Angry', 'Frustrated', 'Lonely', 'Confused', 'Other'],
-                    datasets: [{
-                        label: 'Mood Count',
-                        data: [
-                            moodCount.happy, moodCount.sad, moodCount.neutral,
-                            moodCount.insecure, moodCount.angry, moodCount.frustrated,
-                            moodCount.lonely, moodCount.confused, moodCount.other
-                        ],
-                        backgroundColor: Object.values(moodColors)
-                    }]
-                }
-            });
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            document.querySelectorAll('td').forEach(td => td.classList.toggle('dark-mode'));
-        }
-
-        function displayLegend() {
-            const legendDiv = document.getElementById('legend');
-            let legendHTML = '<h3>Mood Color Legend</h3><ul>';
-            for (let mood in moodColors) {
-                legendHTML += `<li style="color:${moodColors[mood]};">${mood}</li>`;
-            }
-            legendHTML += '</ul>';
-            legendDiv.innerHTML = legendHTML;
-        }
-
-        // Initial function calls
-        generateCalendar();
-        displayChart();
-        displayLegend();
     </script>
+
+    <!-- Chart.js for mood visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Mood Tracker</h1>
+
+    <!-- Mood and Note Inputs -->
+    <label for="mood">Mood:</label>
+    <select id="mood">
+        <option value="happy">Happy</option>
+        <option value="sad">Sad</option>
+        <option value="neutral">Neutral</option>
+        <option value="insecure">Insecure</option>
+        <option value="angry">Angry</option>
+        <option value="frustrated">Frustrated</option>
+        <option value="lonely">Lonely</option>
+        <option value="confused">Confused</option>
+        <option value="other">Other</option>
+    </select>
+
+    <label for="note">Note:</label>
+    <input type="text" id="note">
+
+    <label for="logDate">Date:</label>
+    <input type="date" id="logDate">
+
+    <button onclick="logMood()">Log Mood</button>
+
+    <!-- Background music -->
+    <iframe width="0" height="0" src="https://www.youtube.com/embed/videoseries?list=PLFKvCa84JDikCdUnOC1FbgOH2u8UQ_EVD&autoplay=1&loop=1" frameborder="0" allow="autoplay" allowfullscreen></iframe>
+
+    <!-- Display section for mood entries -->
+    <div id="entries"></div>
+
+    <!-- Visual section for quotes and personalized messages -->
+    <div id="visuals"></div>
+
+    <!-- Calendar for color-coded moods -->
+    <div id="calendar"></div>
+
+    <!-- Mood chart -->
+    <canvas id="moodChart" width="400" height="400"></canvas>
+
+    <!-- Ask about the day -->
+    <button onclick="askAboutDay()">How Was Your Day?</button>
+
 </body>
 </html>
