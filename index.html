@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Journal</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+        }
+        #entries {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Mood Journal</h1>
+    <label for="mood">How are you feeling today?</label>
+    <select id="mood">
+        <option value="happy">Happy</option>
+        <option value="sad">Sad</option>
+        <option value="neutral">Neutral</option>
+    </select>
+    <button onclick="logMood()">Log Mood</button>
+
+    <h2>Your Mood Entries</h2>
+    <div id="entries"></div>
+
+    <script>
+        const moodEntries = [];
+
+        function logMood() {
+            const mood = document.getElementById('mood').value;
+            const date = new Date().toLocaleDateString();
+            moodEntries.push({ mood, date });
+            displayMoods();
+        }
+
+        function displayMoods() {
+            const entriesDiv = document.getElementById('entries');
+            entriesDiv.innerHTML = moodEntries.map(entry => `${entry.date}: ${entry.mood}`).join('<br>');
+        }
+    </script>
+
+</body>
+</html>
