@@ -1,4 +1,25 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Ensure Chart.js is linked -->
+</head>
+<body>
+    <div id="entries"></div>
+    <div id="visuals"></div>
+    <div id="calendar"></div>
+    <canvas id="moodChart" width="400" height="400"></canvas>
+
+    <!-- Legend for mood colors -->
+    <div id="legend"></div>
+
+    <!-- Button to manually trigger color coding -->
+    <button onclick="colorCodeCalendar()">Update Calendar</button>
+
+    <script>
+        // Your JavaScript code goes here
         const moodEntries = [];
         const moodCount = { happy: 0, sad: 0, neutral: 0, insecure: 0, angry: 0, frustrated: 0, lonely: 0, confused: 0, other: 0 };
         const moodColors = {
@@ -136,9 +157,4 @@
         displayLegend();
     </script>
 </body>
-
-<!-- Legend for mood colors -->
-<div id="legend"></div>
-
-<!-- Button to manually trigger color coding -->
-<button onclick="colorCodeCalendar()">Update Calendar</button>
+</html>
