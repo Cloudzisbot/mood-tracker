@@ -1,48 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mood Journal</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-        }
-        #entries {
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-
-    <h1>Mood Journal</h1>
-    <label for="mood">How are you feeling today?</label>
-    <select id="mood">
-        <option value="happy">Happy</option>
-        <option value="sad">Sad</option>
-        <option value="neutral">Neutral</option>
-    </select>
-    <button onclick="logMood()">Log Mood</button>
-
-    <h2>Your Mood Entries</h2>
-    <div id="entries"></div>
-
-    <script>
+<script>
         const moodEntries = [];
+        const moodCount = { happy: 0, sad: 0, neutral: 0, insecure: 0, angry: 0, frustrated: 0, lonely: 0, confused: 0, other: 0 };
+        const moodColors = {
+            happy: '#4caf50',
+            sad: '#f44336',
+            neutral: '#ffeb3b',
+            insecure: '#ff9800',
+            angry: '#e91e63',
+            frustrated: '#9c27b0',
+            lonely: '#3f51b5',
+            confused: '#00bcd4',
+            other: '#607d8b'
+        };
 
         function logMood() {
             const mood = document.getElementById('mood').value;
+            const note = document.getElementById('note').value;
             const date = new Date().toLocaleDateString();
-            moodEntries.push({ mood, date });
+            moodEntries.push({ mood, date, note });
+            moodCount[mood]++;
             displayMoods();
+            displayVisuals(mood);
+            colorCodeCalendar(); // Update calendar with color-coding
+            displayChart(); // Update mood chart
         }
 
         function displayMoods() {
             const entriesDiv = document.getElementById('entries');
-            entriesDiv.innerHTML = moodEntries.map(entry => `${entry.date}: ${entry.mood}`).join('<br>');
+            entriesDiv.innerHTML = moodEntries.map(entry => `${entry.date}: ${entry.mood} - ${entry.note}`).join('<br>');
         }
-    </script>
 
+        function displayVisuals(mood) {
+            const visualsDiv = document.getElementById('visuals');
+            let visualsContent = '';
+            if (mood === 'insecure') {
+                visualsContent = '<img src="/mnt/data/download (44).jpeg" alt="Insecure Mood Image" style="width: 100%;">';
+            } else if (mood === 'sad') {
+                visualsContent = `
+                <blockquote>"The Lord is near to the brokenhearted and saves the crushed in spirit." - Psalm 34:18</blockquote>
+                <blockquote>"Even the darkest night will end and the sun will rise."</blockquote>
+                <blockquote>"I love you always, my dear ${getRandomPetName()}."</blockquote>
+                `;
+            } else if (mood === 'lonely') {
+                visualsContent = `
+                <blockquote>"I will never leave you nor forsake you." - Hebrews 13:5</blockquote>
+                <blockquote>"You are never alone, even when it feels that way."</blockquote>
+                <blockquote>"You are loved, my precious ${getRandomPetName()}."</blockquote>
+                `;
+            } else if (mood === 'angry') {
+                visualsContent = '<img src="/mnt/data/download (45).jpeg" alt="Angry Mood Image" style="width: 100%;">';
+            }
+            visualsDiv.innerHTML = visualsContent;
+        }
+
+        function getRandomPetName() {
+            const petNames = [
+                "M’lady", "Gorgeous", "Darling", "My love", "여보", "자기야", "Angel", "My girl", "Baby", "Babe", "My princess",
+                "My dear", "Wifey", "My beloved", "Mi amor", "Sweetheart", "My doll", "Honey", "My precious", "Sunshine",
+                "Bunny", "My boo", "My bunbun", "Pookie"
+            ];
+            const randomIndex = Math.floor(Math.random() * petNames.length);
+            return petNames[randomIndex];
+        }
+
+        function generateCalendar() {
+            const calendarDiv = document.getElementById('calendar');
+            const currentDate = new Date();
+            const month = currentDate.getMonth();
+            const year = currentDate.getFullYear();
+
+            let daysInMonth = new Date(year, month + 1, 0).getDate();
+            let calendarHTML = '<table><tr>';
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                calendarHTML += `<td id="day-${day}" style="width: 30px; height: 30px; border: 1px solid #ccc;"></td>`;
+                if (day % 7 === 0) {
+                    calendarHTML += '</tr><tr>';
+                }
+            }
+
+            calendarHTML += '</tr></table>';
+            calendarDiv.innerHTML = calendarHTML;
+        }
+
+        function colorCodeCalendar() {
+            const currentDate = new Date();
+            const day = currentDate.getDate();
+            const todayMoodEntry = moodEntries.find(entry => new Date(entry.date).getDate() === day);
+            
+            if (todayMoodEntry) {
+                const dayBlock = document.getElementById(`day-${day}`);
+                if (dayBlock) {
+                    dayBlock.style.backgroundColor = moodColors[todayMoodEntry.mood] || '#ffffff';
+                }
+            }
+        }
+
+        function displayChart() {
+            const ctx = document.getElementById('moodChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Happy', 'Sad', 'Neutral', 'Insecure', 'Angry', 'Frustrated', 'Lonely', 'Confused', 'Other'],
+                    datasets: [{
+                        label: 'Mood Count',
+                        data: [
+                            moodCount.happy, moodCount.sad, moodCount.neutral,
+                            moodCount.insecure, moodCount.angry, moodCount.frustrated,
+                            moodCount.lonely, moodCount.confused, moodCount.other
+                        ],
+                        backgroundColor: Object.values(moodColors)
+                    }]
+                }
+            });
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            document.querySelectorAll('td').forEach(td => td.classList.toggle('dark-mode'));
+        }
+
+        function displayLegend() {
+            const legendDiv = document.getElementById('legend');
+            let legendHTML = '<h3>Mood Color Legend</h3><ul>';
+            for (let mood in moodColors) {
+                legendHTML += `<li style="color:${moodColors[mood]};">${mood}</li>`;
+            }
+            legendHTML += '</ul>';
+            legendDiv.innerHTML = legendHTML;
+        }
+
+        // Initial function calls
+        generateCalendar();
+        displayChart();
+        displayLegend();
+    </script>
 </body>
-</html>
+
+<!-- Legend for mood colors -->
+<div id="legend"></div>
+
+<!-- Button to manually trigger color coding -->
+<button onclick="colorCodeCalendar()">Update Calendar</button>
